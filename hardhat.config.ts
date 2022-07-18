@@ -11,14 +11,46 @@ import "hardhat-contract-sizer";
 import "hardhat-settings";
 import "@solidstate/hardhat-4byte-uploader";
 
+// Our Hardhat tasks
+import "@zkgame/hardhat-tasks/deploy";
+import "@zkgame/hardhat-tasks/node";
+
 // Other
-import type { HardhatUserConfig } from "hardhat/config";
+import type {
+  HardhatRuntimeEnvironment,
+  HardhatUserConfig,
+} from "hardhat/types";
+import { extendEnvironment } from "hardhat/config";
+
+//@ts-ignore because they don't provide types
 import * as mapWorkspaces from "@npmcli/map-workspaces";
+
+declare module "hardhat/types/runtime" {
+  interface HardhatRuntimeEnvironment {
+    packages: Map<string, string>;
+  }
+}
+
+declare module "hardhat/types" {
+  interface HardhatSettings {
+    deployments: {
+      [key: string]: {
+        diamond: string;
+        initializer: string;
+        facets: { name: string; selectors: string | string[] }[];
+      };
+    };
+  }
+}
 
 const packages = mapWorkspaces.virtual({
   cwd: __dirname,
   pkg: require("./package.json"),
   lockfile: require("./package-lock.json"),
+});
+
+extendEnvironment((env: HardhatRuntimeEnvironment) => {
+  env.packages = packages;
 });
 
 const config: HardhatUserConfig = {
@@ -87,7 +119,7 @@ const config: HardhatUserConfig = {
    * Smart Contracts—primarily the ZKGame Contract, which is the Diamond.
    */
   typechain: {
-    outDir: packages.get("@zkgame/contracts"),
+    outDir: packages.get("@zkgame/typechain"),
     target: "ethers-v5",
   },
   /**
@@ -96,7 +128,7 @@ const config: HardhatUserConfig = {
    */
   diamondAbi: {
     name: "ZKGame",
-    include: ["Facet"],
+    include: ["Facet$", ":Diamond$"],
     // We explicitly set `strict` to `true` because we want to validate
     // our facets don't accidentally provide overlapping functions
     strict: true,
@@ -111,15 +143,23 @@ const config: HardhatUserConfig = {
     // We don't want additional directories created, so we explicitly
     // set the `flat` option to `true`
     flat: true,
-    // We **only** want to copy the ZKGame ABI (which is the Diamond ABI we generate) and the
+    // We want to copy the ZKGame ABI (which is the Diamond ABI we generate) and the
     // initializer ABI to this folder, so we limit the matched files with the `only` option
-    only: [":ZKGame$", ":ZKGameInitialize$"],
+    only: [
+      ":ZKGame$",
+      ":Initializer$",
+      // We also want the Diamond so our Hardhat diamond utilities can filter its interface
+      ":Diamond$",
+    ],
   },
   /**
    * This plugin will load and parse the `zkgame.toml` file and provide the
    * values to tasks on the HardhatRuntimeEnvironment.
    */
   settings: {
+    deployments: {
+      lazy: false,
+    },
     zkgame: {
       lazy: false,
     },
