@@ -12,8 +12,8 @@ import "hardhat-settings";
 import "@solidstate/hardhat-4byte-uploader";
 
 // Our Hardhat tasks
-import "@zkgame/hardhat-tasks/deploy";
-import "@zkgame/hardhat-tasks/node";
+import "hardhat-tasks/deploy";
+import "hardhat-tasks/node";
 
 // Other
 import type {
