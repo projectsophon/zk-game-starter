@@ -5,9 +5,13 @@
   "description": "Monorepo for building crypto-native games using Zero Knowledge proofs'",
   "license": "GPL-3.0",
   "workspaces": [
+    "contracts",
+    "tasks",
     "packages/*"
   ],
   "scripts": {
+    "start": "hardhat node --hostname 0.0.0.0",
+    "compile": "hardhat compile",
     "test": "hardhat test"
   },
   "dependencies": {},
@@ -16,6 +20,7 @@
     "@nomicfoundation/hardhat-network-helpers": "^1.0.3",
     "@nomiclabs/hardhat-ethers": "^2.1.0",
     "@npmcli/map-workspaces": "^2.0.3",
+    "@projectsophon/tsconfig": "^0.0.2",
     "@solidstate/hardhat-4byte-uploader": "^1.0.2",
     "@typechain/hardhat": "^6.1.2",
     "hardhat": "^2.10.1",
@@ -23,6 +28,7 @@
     "hardhat-contract-sizer": "^2.6.1",
     "hardhat-diamond-abi": "^3.0.1",
     "hardhat-settings": "^1.0.0",
-    "ts-node": "^8.0.0"
+    "ts-node": "^8.0.0",
+    "typescript": "4.7.x"
   }
 }
