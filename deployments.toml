@@ -9,3 +9,7 @@ initializer = "Initializer"
 [[zkgame.facets]]
 name = "CoreFacet"
 selectors = "*"
+
+[[zkgame.facets]]
+name = "WhitelistFacet"
+selectors = "*"

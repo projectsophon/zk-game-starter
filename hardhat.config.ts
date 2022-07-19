@@ -7,6 +7,7 @@ import "hardhat-abi-exporter";
 import "hardhat-diamond-abi";
 // Must be registered after hardhat-diamond-abi
 import "@typechain/hardhat";
+import "hardhat-circom";
 import "hardhat-contract-sizer";
 import "hardhat-settings";
 import "@solidstate/hardhat-4byte-uploader";
@@ -14,6 +15,7 @@ import "@solidstate/hardhat-4byte-uploader";
 // Our Hardhat tasks
 import "hardhat-tasks/deploy";
 import "hardhat-tasks/node";
+import "hardhat-tasks/circom";
 
 // Other
 import type {
@@ -21,6 +23,7 @@ import type {
   HardhatUserConfig,
 } from "hardhat/types";
 import { extendEnvironment } from "hardhat/config";
+import * as diamondUtils from "hardhat-tasks/utils/diamond";
 
 //@ts-ignore because they don't provide types
 import * as mapWorkspaces from "@npmcli/map-workspaces";
@@ -106,6 +109,25 @@ const config: HardhatUserConfig = {
     },
   },
   /**
+   * This plugins compiles circom circuits and outputs the necessary files to
+   * the `@zkgame/snarks` package.
+   */
+  circom: {
+    inputBasePath: "./circuits/",
+    outputBasePath: packages.get("@zkgame/snarks"),
+    // The ptau15 will be automatically fetched from the hermez dropbox
+    ptau: "https://hermez.s3-eu-west-1.amazonaws.com/powersOfTau28_hez_final_15.ptau",
+    circuits: [
+      {
+        name: "whitelist",
+        circuit: "whitelist.circom",
+        input: "whitelist-input.json",
+        beacon:
+          "0000000005060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+      },
+    ],
+  },
+  /**
    * This plugin will provide size information about all our contracts
    * via the `hardhat size-contracts` command.
    */
@@ -132,6 +154,24 @@ const config: HardhatUserConfig = {
     // We explicitly set `strict` to `true` because we want to validate
     // our facets don't accidentally provide overlapping functions
     strict: true,
+    // We use our diamond utils to filter some functions we ignore from the combined ABI
+    filter(
+      abiElement: unknown,
+      index: number,
+      abi: unknown[],
+      fullyQualifiedName: string
+    ) {
+      // Events can be defined in internal libraries or multiple facets and look like duplicates
+      if (diamondUtils.isOverlappingEvent(abiElement)) {
+        return false;
+      }
+      // Errors can be defined in internal libraries or multiple facets and look like duplicates
+      if (diamondUtils.isOverlappingError(abiElement)) {
+        return false;
+      }
+      const signature = diamondUtils.toSignature(abiElement);
+      return diamondUtils.isIncluded(fullyQualifiedName, signature);
+    },
   },
   /**
    * This plugin will copy the ABI from the ZKGame artifact into our

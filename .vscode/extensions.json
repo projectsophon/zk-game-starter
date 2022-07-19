@@ -1,5 +1,6 @@
 {
     "recommendations": [
-        "NomicFoundation.hardhat-solidity"
+        "nomicfoundation.hardhat-solidity",
+        "iden3.circom"
     ]
 }
